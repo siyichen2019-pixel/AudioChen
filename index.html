@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>语音助手</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #1a1a2e; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+  h1 { font-size: 2em; margin-bottom: 30px; }
+  #btn { width: 120px; height: 120px; border-radius: 50%; font-size: 2.5em; border: none; cursor: pointer; background: #4CAF50; color: white; box-shadow: 0 4px 20px rgba(76,175,80,0.4); transition: all 0.2s; }
+  #btn.recording { background: #f44336; box-shadow: 0 4px 20px rgba(244,67,54,0.4); transform: scale(1.1); }
+  #status { margin: 20px 0; color: #aaa; font-size: 1em; }
+  #chat { width: 100%; max-width: 600px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .bubble { padding: 12px 18px; border-radius: 18px; max-width: 80%; line-height: 1.5; }
+  .user { background: #4CAF50; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .bot  { background: #16213e; align-self: flex-start; border-bottom-left-radius: 4px; }
+  .label { font-size: 0.75em; opacity: 0.6; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<h1>🤖 语音助手</h1>
+<button id="btn" onclick="toggle()">🎤</button>
+<div id="status">按下按钮开始说话</div>
+<div id="chat"></div>
+<script>
+let mediaRecorder, chunks = [], recording = false;
+async function toggle() {
+  if (!recording) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    chunks = [];
+    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+    mediaRecorder.onstop = sendAudio;
+    mediaRecorder.start();
+    recording = true;
+    document.getElementById("btn").className = "recording";
+    document.getElementById("btn").textContent = "⏹️";
+    document.getElementById("status").textContent = "录音中...再按一次停止";
+  } else {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    recording = false;
+    document.getElementById("btn").className = "";
+    document.getElementById("btn").textContent = "⏳";
+    document.getElementById("btn").disabled = true;
+    document.getElementById("status").textContent = "处理中...";
+  }
+}
+async function sendAudio() {
+  const blob = new Blob(chunks, { type: "audio/webm" });
+  const form = new FormData();
+  form.append("audio", blob, "audio.webm");
+  const res = await fetch("/chat", { method: "POST", body: form });
+  const data = await res.json();
+  addBubble("你", data.user_text, "user");
+  addBubble("助手", data.reply, "bot");
+  new Audio(data.audio_url).play();
+  document.getElementById("btn").textContent = "🎤";
+  document.getElementById("btn").disabled = false;
+  document.getElementById("status").textContent = "按下按钮开始说话";
+}
+function addBubble(label, text, who) {
+  const wrap = document.createElement("div");
+  wrap.style.display = "flex";
+  wrap.style.flexDirection = "column";
+  wrap.style.alignItems = who === "user" ? "flex-end" : "flex-start";
+  wrap.innerHTML = `<div class="label">${label}</div><div class="bubble ${who}">${text}</div>`;
+  document.getElementById("chat").appendChild(wrap);
+  wrap.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
