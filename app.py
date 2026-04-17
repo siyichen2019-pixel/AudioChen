@@ -9,8 +9,8 @@ app = FastAPI()
 openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 # ElevenLabs 配置
-ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")  # 填入你的 ElevenLabs API Key
-ELEVENLABS_VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID")  # 填入你的 Voice ID
+ELEVENLABS_API_KEY = os.environ.get("sk_7c7278ccf42b193b5788faa1e98b8e4efda0ec6b36fa3f47")  # ElevenLabs API Key
+ELEVENLABS_VOICE_ID = os.environ.get("TGC5CFLr4Lr8gDEv7r7c")  # Voice ID
 
 messages = [
     {"role": "system", "content": "你是一个有趣的语音助手，回答简洁，100字以内。"}
